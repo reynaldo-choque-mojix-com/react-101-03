@@ -10,15 +10,50 @@ import EstimatedTotal from './components/estimated_total/EstimatedTotal';
 import ItemDetails from './components/item_details/ItemDetails';
 import PromoCodeDiscount from './components/promo_code/PromoCode';
 
+//redux
+import { connect } from 'react-redux';
+import { handleChange } from './actions/promoCodeActions';
+
 class App extends Component {
   constructor(props) {
     super(props);
 
     this.state = {
-      total: 100,
+      total: 300,
       pickupSaving: -12.21,
       taxes: 0,
-      estimatedTotal: 0
+      estimatedTotal: 0,
+      disablePromoButton: false
+    }
+  }
+
+  componentDidMount = () => {
+    this.setState(
+      {
+        taxes: (this.state.total + this.state.pickupSaving) * 0.13
+      },
+      function() {
+        this.setState({
+          estimatedTotal: this.state.total + this.state.pickupSaving + this.state.taxes
+        })
+      }
+    )
+  }
+
+  giveDiscount = () => {
+    console.log('hola', this.props);
+    if( this.props.promoCode === 'DISCOUNT') {
+      console.log("you have a discount");
+      this.setState(
+        {
+          estimatedTotal: this.state.estimatedTotal * 0.9
+        },
+        function() {
+          this.setState({
+            disablePromoButton: true
+          });
+        }
+      );
     }
   }
 
@@ -32,11 +67,18 @@ class App extends Component {
           <hr />
           <EstimatedTotal price={this.state.estimatedTotal.toFixed(2)} />
           <ItemDetails price={this.state.estimatedTotal.toFixed(2)} />
-          <PromoCodeDiscount />
+          <PromoCodeDiscount 
+            isDisabled={this.state.disablePromoButton}
+            applyDiscount={this.giveDiscount}  
+          />
         </Grid>
       </div>
     );
   }
 }
 
-export default App;
+const mapStateToProps = state => ({
+  promoCode: state.promoCode.value
+});
+
+export default connect(mapStateToProps, { handleChange })(App);
